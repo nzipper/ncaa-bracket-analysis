@@ -9,7 +9,7 @@ def main():
     game_data = pd.concat([pd.read_csv('Data/MRegularSeasonDetailedResults.csv'),pd.read_csv('Data/MNCAATourneyDetailedResults.csv')])
     metric_data = pd.read_csv('Data/MMasseyOrdinals.csv')
 
-    # Define context of trainig example
+    # Define context of training example
     example_context = ['Season', 'TeamID']
 
     # Choose features from game data
@@ -32,31 +32,37 @@ def main():
     team_ordinal = metric_data.groupby(by=['Season', 'TeamID']).OrdinalRank.mean()
     team_stats = pd.merge(left=team_season_avg_game_stats, right=team_ordinal, how='left', left_index=True, right_index=True)
 
-    # Initialize example and label vectors
+    # Initialize example features and labels
     X_data = np.empty(shape=(len(game_data),len(game_features)+1))
     y_data = np.empty(len(game_data))
 
-    # Iterate through games to generate feature vectors and labels
+    # Iterate through games to generate features and labels
     print("\nIterating through matchups...\n")
     for i in trange(len(game_data)):
         # Get averaged stats for team in matchup
         winner_stats = team_stats.loc[(game_data.iloc[i,0], game_data.iloc[i,2])]
         loser_stats = team_stats.loc[(game_data.iloc[i,0], game_data.iloc[i,4])]
         
-        # Produce feature vector to be differential of team features
+        # Define feature vector as differential of averaged team features 
         differential = (winner_stats - loser_stats).to_numpy()
 
         # Randomly select which team wins to minimize bias
-        random_entries = [(differential, 1),(-differential, -1)]
+        random_entries = [(differential, 1),(-differential, 0)]
         X_data[i], y_data[i] = random_entries[np.random.choice([0,1])]
 
     # Save to pickle file
-    train_data = (X_data,y_data)
-    filename = 'Data/training_data.pickle'
-    with open(filename, 'wb') as file:
-        pkl.dump(train_data, file)
+    pickle_data = (X_data,y_data)
+    pickle_filename = 'Data/training_data.pickle'
+    with open(pickle_filename, 'wb') as file:
+        pkl.dump(pickle_data, file)
+    print(f"\nTraining data saved to '{pickle_filename}'")
     
-    print(f"\nTraining data saved to '{filename}'")
+    # Save to csv file
+    csv_data = np.concatenate((X_data,np.expand_dims(y_data,axis=1)), axis=1)
+    csv_filename = 'Data/training_data.csv'
+    with open(csv_filename, 'wb') as file:
+        np.savetxt(csv_filename, csv_data, delimiter=',')
+    print(f"\nTraining data saved to '{csv_filename}'")
 
 if __name__ == "__main__":
     main()
