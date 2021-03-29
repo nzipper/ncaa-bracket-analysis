@@ -1,2 +1,5 @@
-# ignore data folder
-Data/
+# ignore data folder contents
+Data/*
+
+# ignore model folder contents (pre-trained models)
+Models/*
