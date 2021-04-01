@@ -13,11 +13,14 @@
 ## How to Run
 
 ### Step 1: Download Kaggle Data
-(after installing and authenticating Kaggle API)
 ```bash
+cd Data
 kaggle competitions download -c ncaam-march-mania-2021
+unzip ncaam-march-mania-2021.zip
+mv MDataFiles_Stage2/* .
+rm -r MDataFiles_Stage1 MDataFiles_Stage2 ncaam-march-mania-2021.zip
+cd ..
 ```
-and make sure to unzip the files in the 'Data/' folder!
 
 ### Step 2: Generate Training Data
 ```bash
