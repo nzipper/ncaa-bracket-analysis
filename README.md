@@ -8,6 +8,7 @@
 - [tqdm](https://github.com/tqdm/tqdm)
 - [scikit-learn](https://scikit-learn.org/stable/index.html)
 - [keras](https://keras.io/)
+- [bracketeer](https://github.com/cshaley/bracketeer)
 
 ## How to Run
 
@@ -22,11 +23,20 @@ and make sure to unzip the files in the 'Data/' folder!
 ```bash
 python makeTrainingData.py
 ```
-
 ### Step 3: Train Models
 ```bash
 python buildNNModel.py
 ```
+### Step 4: Predict Tournament Results
+```bash
+python makeBracketPredictions.py
+```
+
+### Step 5: Generate Bracket
+```bash
+python buildBracket.py
+```
+(Outputs image in 'Output/' directory)
 
 ## Authors
 Noah Zipper and Samuel Radack
