@@ -15,8 +15,14 @@ def preprocessData(X_all, y_all, testing=False):
         y_all = y_all[:10]
 
     # Re-scale feature vectors to unit variance
-    sc = StandardScaler()
-    X_all = sc.fit_transform(X_all)
+    scaler = StandardScaler()
+    X_all = scaler.fit_transform(X_all)
+
+    # Save scaler to pickle file for use in bracket predictions
+    scaler_filename = 'Models/scaler.pickle'
+    with open(scaler_filename, 'wb') as file:
+        pkl.dump(scaler, file)
+    print(f"Scaler saved to '{scaler_filename}'")
 
     # Apply principle component analysis to reduce dimensionality
     pca = decomposition.PCA(n_components = 10)

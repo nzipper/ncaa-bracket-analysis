@@ -32,6 +32,12 @@ def main():
     team_ordinal = metric_data.groupby(by=['Season', 'TeamID']).OrdinalRank.mean()
     team_stats = pd.merge(left=team_season_avg_game_stats, right=team_ordinal, how='left', left_index=True, right_index=True)
 
+    # Save all team stats to csv file for bracket building
+    team_stats_filename = 'Data/team_data.csv'
+    team_stats.to_csv(team_stats_filename)
+    print(f"Team data saved to '{team_stats_filename}'")
+
+
     # Initialize example features and labels
     X_data = np.empty(shape=(len(game_data),len(game_features)+1))
     y_data = np.empty(len(game_data))
