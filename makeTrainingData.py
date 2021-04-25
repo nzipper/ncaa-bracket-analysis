@@ -21,18 +21,27 @@ def parse_args():
 
 
 def main(args):
+    ##################################
+    ## Tunable parameters for training
+    ##################################
+    # Define context of training example
+    example_context = ['Season', 'TeamID']
+    cutoff_year = 2015
+
+    # Choose features from game data
+    game_features = ['Score', 'FGM', 'FGA', 'FGM3', 'FGA3',
+                     'FTM', 'FTA', 'OR', 'DR', 'Ast', 'TO', 'Stl', 'Blk', 'PF']
+    ##################################
 
     # Read in data from reg season,tournament games, and advanced metrics
     game_data = pd.concat([pd.read_csv('Data/MRegularSeasonDetailedResults.csv'),
                           pd.read_csv('Data/MNCAATourneyDetailedResults.csv')])
     metric_data = pd.read_csv('Data/MMasseyOrdinals.csv')
 
-    # Define context of training example
-    example_context = ['TeamID']
-
-    # Choose features from game data
-    game_features = ['Score', 'FGM', 'FGA', 'FGM3', 'FGA3',
-                     'FTM', 'FTA', 'OR', 'DR', 'Ast', 'TO', 'Stl', 'Blk', 'PF']
+    # Apply time-range cut if applicable
+    if cutoff_year is not None:
+        game_data = game_data[game_data.Season>=cutoff_year]
+        metric_data = metric_data[metric_data.Season>=cutoff_year]
 
     # Team-independent columns
     ind_columns = ['Season', 'DayNum', 'NumOT']

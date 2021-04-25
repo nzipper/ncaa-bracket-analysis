@@ -1,8 +1,24 @@
+import argparse
 import numpy as np
 import pandas as pd
 import pickle as pkl
 from keras.models import load_model
 from sklearn import decomposition
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='')
+    parser.add_argument('-it',
+                        '--input_tag',
+                        type=str,
+                        help='Input data file name tag')
+    parser.add_argument('-ot',
+                        '--output_tag',
+                        type=str,
+                        help='Output file name tag')
+    args = parser.parse_args()
+    return args
 
 
 def preprocessData(X, scaler):
@@ -33,12 +49,22 @@ def extractFeatures(team_data, matchups):
     return features
 
 
-def main():
+def main(args):
     # Read in output format, team data, and models
+    if args.input_tag:
+        # team_data_name = ''.join(['Data/team_data_', args.input_tag, '.csv'])
+        team_data_name = 'Data/team_data.csv'
+        model_NN_name = ''.join(['Models/nn_model_', args.input_tag, '.h5'])
+        scaler_name = ''.join(['Models/scaler_', args.input_tag, '.pickle'])
+    else:
+        team_data_name = 'Data/team_data.csv'
+        model_NN_name = 'Models/nn_model.h5'
+        scaler_name = 'Models/scaler.pickle'
+
+    team_data = pd.read_csv(team_data_name)
+    model_NN = load_model(model_NN_name)
     results_format = pd.read_csv('Data/MSampleSubmissionStage2.csv').copy()
-    team_data = pd.read_csv('Data/team_data.csv')
-    model_NN = load_model('Models/nn_model.h5')
-    with open('Models/scaler.pickle', 'rb') as file:
+    with open(scaler_name, 'rb') as file:
         scaler_NN = pkl.load(file)
 
     # Generate predictions for tournament
@@ -48,10 +74,15 @@ def main():
     output = pd.DataFrame({'ID': results_format.ID, 'Pred': predictions})
 
     # Save to csv file
-    csv_filename = 'Data/tournament_predictions.csv'
+    if args.output_tag:
+        csv_filename = ''.join(['Output/tournament_predictions_', args.output_tag, '.csv'])
+    else:
+        csv_filename = 'Output/tournament_predictions.csv'
+    
     output.to_csv(csv_filename, index=False)
     print(f"Predictions saved to '{csv_filename}'")
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(args)

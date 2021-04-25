@@ -34,20 +34,49 @@ Optional Arguments:
 -nd --ndebug       Run miniature training with selected number of examples 
 ```
 
-### Step 3: Train Models
+### Step 3: Inspect Features to Improve Model
+- NCAA_LASSO.R
+Use R to analyze feature importance and correlation. Improve feature selection and re-run sample production before training model.
+
+### Step 4: Train Model
 ```bash
 python buildNNModel.py
 ```
-### Step 4: Predict Tournament Results
+
+Optional Arguments:
+```
+-it --input_tag    Optional tag for input data file
+
+-ot --output_tag   Optional tag for output files
+
+-nd --ndebug       Run miniature training with selected number of examples 
+
+-gs --gridsearch   Perform exhaustive grid search for meta-parameters
+```
+
+### Step 5: Predict Tournament Results
 ```bash
 python makeBracketPredictions.py
 ```
 
-### Step 5: Generate Bracket
+Optional Arguments:
+```
+-it --input_tag    Optional tag for input data file
+
+-ot --output_tag   Optional tag for output files
+```
+
+### Step 6: Generate Bracket
 ```bash
 python buildBracket.py
 ```
-(Outputs image in 'Output/' directory)
+
+Optional Arguments:
+```
+-it --input_tag    Optional tag for input data file
+
+-ot --output_tag   Optional tag for output files
+```
 
 ## Authors
 Noah Zipper and Samuel Radack

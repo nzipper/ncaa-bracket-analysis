@@ -33,7 +33,7 @@ def parse_args():
     return args
 
 
-def preprocessData(X_all, y_all, debug=False):
+def preprocessData(X_all, y_all, debug=False, tag=None):
     # Sample small amount of data for debug purposes
     if debug:
         X_all = X_all[:args.ndebug]
@@ -44,7 +44,11 @@ def preprocessData(X_all, y_all, debug=False):
     X_all = scaler.fit_transform(X_all)
 
     # Save scaler to pickle file for use in bracket predictions
-    scaler_filename = 'Models/scaler.pickle'
+    if tag is not None:
+        scaler_filename = ''.join(['Models/scaler_', tag, '.pickle'])
+    else:
+        scaler_filename = 'Models/scaler.pickle'
+
     with open(scaler_filename, 'wb') as file:
         pkl.dump(scaler, file)
     print(f"Scaler saved to '{scaler_filename}'")
@@ -116,7 +120,7 @@ def main(args):
     with open(input_data, 'rb') as file:
         X, y = pkl.load(file)
 
-    X_train, X_test, y_train, y_test = preprocessData(X, y, args.ndebug)
+    X_train, X_test, y_train, y_test = preprocessData(X, y, args.ndebug, args.output_tag)
 
     # Build classifier
     NN = KerasClassifier(build_fn=buildNN,
