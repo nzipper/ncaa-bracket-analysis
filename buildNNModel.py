@@ -1,19 +1,43 @@
+import argparse
 import numpy as np
 import pickle as pkl
 from sklearn import decomposition
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import StratifiedKFold, GridSearchCV, cross_val_score, train_test_split
 from sklearn.metrics import accuracy_score
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 
 
-def preprocessData(X_all, y_all, testing=False):
-    # Sample small amount of data for testing purposes
-    if testing:
-        X_all = X_all[:10]
-        y_all = y_all[:10]
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='')
+    parser.add_argument('-it',
+                        '--input_tag',
+                        type=str,
+                        help='Input data file name tag')
+    parser.add_argument('-ot',
+                        '--output_tag',
+                        type=str,
+                        help='Output file name tag')
+    parser.add_argument('-nd',
+                        '--ndebug',
+                        metavar="[1-83]",
+                        help='Number of examples to use for debugging purposes')
+    parser.add_argument('-gs',
+                        '--gridsearch',
+                        action='store_true',
+                        help='Perform exhaustive grid search for meta-parameters')
+    args = parser.parse_args()
+    return args
+
+
+def preprocessData(X_all, y_all, debug=False):
+    # Sample small amount of data for debug purposes
+    if debug:
+        X_all = X_all[:args.ndebug]
+        y_all = y_all[:args.ndebug]
 
     # Re-scale feature vectors to unit variance
     scaler = StandardScaler()
@@ -37,7 +61,7 @@ def preprocessData(X_all, y_all, testing=False):
     return X_train, X_test, y_train, y_test
 
 
-def buildNN(input_dim=None, optimizer='adam', hidden_layers=3, hidden_activation='relu', hidden_dropout=0.2, hidden_width=100):
+def buildNN(input_dim=None, optimizer=None, hidden_layers=None, hidden_activation=None, hidden_dropout=None, hidden_width=None):
     NN = Sequential()
     NN.add(Dense(50,
                  input_dim=input_dim,
@@ -55,9 +79,58 @@ def buildNN(input_dim=None, optimizer='adam', hidden_layers=3, hidden_activation
     return NN
 
 
-def trainNN(NN, X_train, y_train):
+def trainNN(NN, X_train, y_train, model_search_params=None):
+    if model_search_params is not None:
+        # Optimize meta-parameters with grid search and cross-validation
+        clf = GridSearchCV(NN,
+                           param_grid=model_search_params,
+                           scoring='accuracy',
+                           n_jobs=1)
+        print('Starting Grid Search (This Will Take A While)...')
+        clf.fit(X_train, y_train)
+
+        model, score, params = clf.best_estimator_.model, clf.best_score_, clf.best_params_
+    else:
+        # Fit estimator to training data
+        clf = NN
+        clf.fit(X_train, y_train)
+
+        # Find KFold cross-validation score for estimator
+        kfold = StratifiedKFold(n_splits=5, shuffle=True,
+                                random_state=np.random.seed())
+        results = cross_val_score(clf, X_train, y_train, cv=kfold)
+
+        model, score, params = clf.model, results.mean(), clf.get_params()
+
+    return model, score, params
+
+
+def main(args):
+    # Load data
+    if args.input_tag:
+        input_data = ''.join(
+            ['Data/training_data_', args.input_tag, '.pickle'])
+    else:
+        input_data = 'Data/training_data.pickle'
+
+    with open(input_data, 'rb') as file:
+        X, y = pkl.load(file)
+
+    X_train, X_test, y_train, y_test = preprocessData(X, y, args.ndebug)
+
+    # Build classifier
+    NN = KerasClassifier(build_fn=buildNN,
+                         input_dim=X_train.shape[1],
+                         optimizer='adam',
+                         hidden_layers=3,
+                         hidden_activation='relu',
+                         hidden_dropout=0.2,
+                         hidden_width=25,
+                         epochs=2,
+                         batch_size=5)
+
     # Set meta-parameters for grid search optimization
-    params = {
+    model_search_params = {
         'epochs': [2, 5],
         'batch_size': [2, 5],
         'hidden_layers': [3],
@@ -67,45 +140,31 @@ def trainNN(NN, X_train, y_train):
         'optimizer': ['adam']
     }
 
-    # Optimize meta-parameters with grid search and cross-validation
-    clf = GridSearchCV(NN,
-                       param_grid=params,
-                       scoring='accuracy',
-                       n_jobs=-1)
-
-    print('Starting Grid Search (This Will Take A While)...')
-    clf.fit(X_train, y_train)
-
-    # Return optimal network
-    return clf.best_estimator_.model, clf.best_params_
-
-
-def main():
-    # Load pre-processed data
-    with open('Data/training_data.pickle', 'rb') as file:
-        X, y = pkl.load(file)
-
-        X_train, X_test, y_train, y_test = preprocessData(X, y, testing=False)
-
-    # Build classifier network
-    NN = KerasClassifier(build_fn=buildNN, input_dim=X_train.shape[1])
-
     # Train network with grid search to optimize parameters
-    NN_opt, features_opt = trainNN(NN, X_train, y_train)
+    NN_Model_opt, NN_score_opt, NN_features_opt = trainNN(
+        NN, X_train, y_train, model_search_params if args.gridsearch else None)
 
     # Calculate test accuracy
-    y_pred = np.where((NN_opt.predict(X_test) > 0.5).astype("int32"), 1, 0)
+    y_pred = np.where((NN_Model_opt.predict(X_test) > 0.5).astype("int32"), 1, 0)
     acc_test = accuracy_score(y_test, y_pred)
 
     # Output model information
-    print(f'Test Accuracy = {round(acc_test, 5)*100}%')
-    print('\tMeta-Parameters: ')
-    for pair in features_opt.items():
+    print(f'\nOptimal NN Model Test Score: {acc_test*100}%')
+    print('Optimal Meta-Parameters: ')
+    for pair in NN_features_opt.items():
         print(f'\t{pair[0]} = {pair[1]}')
 
     # Save trained model
-    NN_opt.save('Models/nn_model.h5')
+    output_name = 'Models/nn_model.h5'
+    if args.output_tag:
+        output_name = ''.join(['Models/nn_model_', args.output_tag, '.h5'])
+    else:
+        output_name = 'Models/nn_model.h5'
+
+    NN_Model_opt.save(output_name)
+    print(f"\nNN Model saved to '{output_name}'")
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(args)

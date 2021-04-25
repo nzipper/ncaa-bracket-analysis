@@ -11,7 +11,7 @@ def parse_args():
     parser.add_argument('-ot',
                         '--output_tag',
                         type=str,
-                        help='Output file name')
+                        help='Output file name tag')
     parser.add_argument('-nd',
                         '--ndebug',
                         type=int,
