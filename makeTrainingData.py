@@ -4,6 +4,7 @@ import pandas as pd
 import pickle as pkl
 from tqdm import trange
 
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description='')
@@ -18,6 +19,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
 def main(args):
 
     # Read in data from reg season,tournament games, and advanced metrics
@@ -26,18 +28,21 @@ def main(args):
     metric_data = pd.read_csv('Data/MMasseyOrdinals.csv')
 
     # Define context of training example
-    example_context = ['Season', 'TeamID']
+    example_context = ['TeamID']
 
     # Choose features from game data
     game_features = ['Score', 'FGM', 'FGA', 'FGM3', 'FGA3',
                      'FTM', 'FTA', 'OR', 'DR', 'Ast', 'TO', 'Stl', 'Blk', 'PF']
 
+    # Team-independent columns
+    ind_columns = ['Season', 'DayNum', 'NumOT']
+
     # Generate dataframe for game data
     columns = example_context+game_features
-    win_columns = ['W'+string if string !=
-                   'Season' else string for string in columns]
-    loss_columns = ['L'+string if string !=
-                    'Season' else string for string in columns]
+    win_columns = [
+        'W'+string if string not in ind_columns else string for string in columns]
+    loss_columns = [
+        'L'+string if string not in ind_columns else string for string in columns]
 
     wteam_season_game_stats = game_data.loc[:, win_columns]
     lteam_season_game_stats = game_data.loc[:, loss_columns]
@@ -47,11 +52,11 @@ def main(args):
     team_season_game_stats = pd.concat(
         [wteam_season_game_stats, lteam_season_game_stats])
     team_season_avg_game_stats = team_season_game_stats.groupby(
-        by=['Season', 'TeamID']).mean()
+        by=example_context).mean()
 
     # Join averaged Massey metrics to dataframe
     team_ordinal = metric_data.groupby(
-        by=['Season', 'TeamID']).OrdinalRank.mean()
+        by=example_context).OrdinalRank.mean()
     team_stats = pd.merge(left=team_season_avg_game_stats,
                           right=team_ordinal, how='left', left_index=True, right_index=True)
 
@@ -61,19 +66,21 @@ def main(args):
 
     # Iterate through games to generate features and labels
     print("\nIterating through matchups...\n")
-    
+
     if args.ndebug:
         game_data = game_data.sample(args.ndebug)
 
     for i in trange(len(game_data)):
-        # Get averaged stats for team in matchup
-        winner_stats = team_stats.loc[(
-            game_data.iloc[i, 0], game_data.iloc[i, 2])]
-        loser_stats = team_stats.loc[(
-            game_data.iloc[i, 0], game_data.iloc[i, 4])]
+        # Get averaged stats for team context in matchup
+        win_context = tuple([game_data.iloc[i, game_data.columns.get_loc(
+            context)] for context in ['W'+string if string not in ind_columns else string for string in example_context]])
+
+        loss_context = tuple([game_data.iloc[i, game_data.columns.get_loc(
+            context)] for context in ['L'+string if string not in ind_columns else string for string in example_context]])
 
         # Define feature vector as differential of averaged team features
-        differential = (winner_stats - loser_stats).to_numpy()
+        differential = (
+            team_stats.loc[win_context] - team_stats.loc[loss_context]).to_numpy()
 
         # Randomly select which team wins to minimize bias
         random_entries = [(differential, 1), (-differential, 0)]
@@ -83,10 +90,9 @@ def main(args):
     data_filename = 'Data/training_data'
 
     if args.output_tag:
-        team_stats_filename = ''.join([team_stats_filename, '_', args.output_tag])
+        team_stats_filename = ''.join(
+            [team_stats_filename, '_', args.output_tag])
         data_filename = ''.join([data_filename, '_', args.output_tag])
-
-    print(data_filename)
 
     # Save all team stats to csv file for bracket building
     full_team_stats_filename = ''.join([team_stats_filename, '.csv'])
@@ -106,6 +112,7 @@ def main(args):
     with open(csv_filename, 'wb') as file:
         np.savetxt(csv_filename, csv_data, delimiter=',')
     print(f"\nTraining data saved to '{csv_filename}'")
+
 
 if __name__ == "__main__":
     args = parse_args()
