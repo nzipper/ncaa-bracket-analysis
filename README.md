@@ -26,6 +26,14 @@ cd ..
 ```bash
 python makeTrainingData.py
 ```
+
+Optional Arguments:
+```
+-ot --output_tag   Optional tag for output files
+
+-nd --ndebug       Run miniature training with selected number of examples 
+```
+
 ### Step 3: Train Models
 ```bash
 python buildNNModel.py

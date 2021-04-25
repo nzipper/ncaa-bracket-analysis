@@ -61,6 +61,10 @@ def main(args):
 
     # Iterate through games to generate features and labels
     print("\nIterating through matchups...\n")
+    
+    if args.ndebug:
+        game_data = game_data.sample(args.ndebug)
+
     for i in trange(len(game_data)):
         # Get averaged stats for team in matchup
         winner_stats = team_stats.loc[(
