@@ -1,10 +1,20 @@
+import argparse
 import numpy as np
 import pandas as pd
 import pickle as pkl
 from tqdm import trange
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='')
+    parser.add_argument('-ot',
+                        '--output_tag',
+                        type=str,
+                        help='Output file name')
+    args = parser.parse_args()
+    return args
 
-def main():
+def main(args):
 
     # Read in data from reg season,tournament games, and advanced metrics
     game_data = pd.concat([pd.read_csv('Data/MRegularSeasonDetailedResults.csv'),
@@ -41,11 +51,6 @@ def main():
     team_stats = pd.merge(left=team_season_avg_game_stats,
                           right=team_ordinal, how='left', left_index=True, right_index=True)
 
-    # Save all team stats to csv file for bracket building
-    team_stats_filename = 'Data/team_data.csv'
-    team_stats.to_csv(team_stats_filename)
-    print(f"Team data saved to '{team_stats_filename}'")
-
     # Initialize example features and labels
     X_data = np.empty(shape=(len(game_data), len(game_features)+1))
     y_data = np.empty(len(game_data))
@@ -66,20 +71,32 @@ def main():
         random_entries = [(differential, 1), (-differential, 0)]
         X_data[i], y_data[i] = random_entries[np.random.choice([0, 1])]
 
+    team_stats_filename = 'Data/team_data'
+    data_filename = 'Data/training_data'
+
+    if args.output_tag:
+        team_stats_filename.join(['_', args.output_tag])
+        data_filename.join(['_', args.output_tag])
+
+    # Save all team stats to csv file for bracket building
+    full_team_stats_filename = ''.join([team_stats_filename, '.csv'])
+    team_stats.to_csv(full_team_stats_filename)
+    print(f"Team data saved to '{full_team_stats_filename}'")
+
     # Save to pickle file
     pickle_data = (X_data, y_data)
-    pickle_filename = 'Data/training_data.pickle'
+    pickle_filename = ''.join([data_filename, '.pickle'])
     with open(pickle_filename, 'wb') as file:
         pkl.dump(pickle_data, file)
     print(f"\nTraining data saved to '{pickle_filename}'")
 
     # Save to csv file
     csv_data = np.concatenate((X_data, np.expand_dims(y_data, axis=1)), axis=1)
-    csv_filename = 'Data/training_data.csv'
+    csv_filename = ''.join([data_filename, '.csv'])
     with open(csv_filename, 'wb') as file:
         np.savetxt(csv_filename, csv_data, delimiter=',')
     print(f"\nTraining data saved to '{csv_filename}'")
 
-
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(args)
