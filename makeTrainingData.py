@@ -11,6 +11,10 @@ def parse_args():
                         '--output_tag',
                         type=str,
                         help='Output file name')
+    parser.add_argument('-nd',
+                        '--ndebug',
+                        type=int,
+                        help='Number of examples to use for debugging purposes')
     args = parser.parse_args()
     return args
 
@@ -75,8 +79,10 @@ def main(args):
     data_filename = 'Data/training_data'
 
     if args.output_tag:
-        team_stats_filename.join(['_', args.output_tag])
-        data_filename.join(['_', args.output_tag])
+        team_stats_filename = ''.join([team_stats_filename, '_', args.output_tag])
+        data_filename = ''.join([data_filename, '_', args.output_tag])
+
+    print(data_filename)
 
     # Save all team stats to csv file for bracket building
     full_team_stats_filename = ''.join([team_stats_filename, '.csv'])
