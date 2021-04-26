@@ -27,6 +27,7 @@ def main(args):
     # Define context of training example
     example_context = ['Season', 'TeamID']
     cutoff_year = 2015
+    add_massey_ordinals = True
 
     # Choose features from game data
     game_features = ['Score', 'FGM', 'FGA', 'FGM3', 'FGA3',
@@ -64,10 +65,13 @@ def main(args):
         by=example_context).mean()
 
     # Join averaged Massey metrics to dataframe
-    team_ordinal = metric_data.groupby(
-        by=example_context).OrdinalRank.mean()
-    team_stats = pd.merge(left=team_season_avg_game_stats,
-                          right=team_ordinal, how='left', left_index=True, right_index=True)
+    if add_massey_ordinals:
+        team_ordinal = metric_data.groupby(
+            by=example_context).OrdinalRank.mean()
+        team_stats = pd.merge(left=team_season_avg_game_stats,
+                            right=team_ordinal, how='left', left_index=True, right_index=True)
+    else:
+        team_stats = team_season_avg_game_stats
 
     # Initialize example features and labels
     X_data = np.empty(shape=(len(game_data), len(game_features)+1))
