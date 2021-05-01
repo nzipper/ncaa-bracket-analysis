@@ -89,7 +89,7 @@ def trainNN(NN, X_train, y_train, model_search_params=None):
         clf = GridSearchCV(NN,
                            param_grid=model_search_params,
                            scoring='accuracy',
-                           n_jobs=1)
+                           n_jobs=2)
         print('Starting Grid Search (This Will Take A While)...')
         clf.fit(X_train, y_train)
 
@@ -129,8 +129,8 @@ def main(args):
                          hidden_layers=3,
                          hidden_activation='relu',
                          hidden_dropout=0.2,
-                         hidden_width=25,
-                         epochs=2,
+                         hidden_width=50,
+                         epochs=5,
                          batch_size=5)
 
     # Set meta-parameters for grid search optimization

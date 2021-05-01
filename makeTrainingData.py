@@ -21,18 +21,24 @@ def parse_args():
 
 
 def main(args):
-    ##################################
-    ## Tunable parameters for training
-    ##################################
+    ###########################################################################
+    # Tunable parameters for training
+    ###########################################################################
+
     # Define context of training example
-    example_context = ['Season', 'TeamID']
-    cutoff_year = 2015
-    add_massey_ordinals = True
+    example_context = ['TeamID']
 
     # Choose features from game data
     game_features = ['Score', 'FGM', 'FGA', 'FGM3', 'FGA3',
                      'FTM', 'FTA', 'OR', 'DR', 'Ast', 'TO', 'Stl', 'Blk', 'PF']
-    ##################################
+
+    # Cut-off first year of data
+    cutoff_year = None
+
+    # Include Massey Ordinal metrics in features
+    add_massey_ordinals = True
+    
+    ###########################################################################
 
     # Read in data from reg season,tournament games, and advanced metrics
     game_data = pd.concat([pd.read_csv('Data/MRegularSeasonDetailedResults.csv'),
@@ -41,8 +47,8 @@ def main(args):
 
     # Apply time-range cut if applicable
     if cutoff_year is not None:
-        game_data = game_data[game_data.Season>=cutoff_year]
-        metric_data = metric_data[metric_data.Season>=cutoff_year]
+        game_data = game_data[game_data.Season >= cutoff_year]
+        metric_data = metric_data[metric_data.Season >= cutoff_year]
 
     # Team-independent columns
     ind_columns = ['Season', 'DayNum', 'NumOT']
@@ -64,18 +70,19 @@ def main(args):
     team_season_avg_game_stats = team_season_game_stats.groupby(
         by=example_context).mean()
 
-    # Join averaged Massey metrics to dataframe
+    # Join averaged Massey metrics and initialize features and labels
     if add_massey_ordinals:
         team_ordinal = metric_data.groupby(
             by=example_context).OrdinalRank.mean()
         team_stats = pd.merge(left=team_season_avg_game_stats,
-                            right=team_ordinal, how='left', left_index=True, right_index=True)
+                              right=team_ordinal, how='left', left_index=True, right_index=True)
+
+        X_data = np.empty(shape=(len(game_data), len(game_features)+1))
+        y_data = np.empty(len(game_data))
     else:
         team_stats = team_season_avg_game_stats
-
-    # Initialize example features and labels
-    X_data = np.empty(shape=(len(game_data), len(game_features)+1))
-    y_data = np.empty(len(game_data))
+        X_data = np.empty(shape=(len(game_data), len(game_features)))
+        y_data = np.empty(len(game_data))
 
     # Iterate through games to generate features and labels
     print("\nIterating through matchups...\n")

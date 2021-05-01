@@ -54,6 +54,8 @@ Optional Arguments:
 -gs --gridsearch   Perform exhaustive grid search for meta-parameters
 ```
 
+Output when training shows model hyperparameters and cross-validation accuracy.
+
 ### Step 5: Predict Tournament Results
 ```bash
 python makeBracketPredictions.py
@@ -77,6 +79,8 @@ Optional Arguments:
 
 -ot --output_tag   Optional tag for output files
 ```
+
+Alternatively, for a more visually appealing output with log loss included in the visualization, plug your bracket predictions CSV file into the following web tool: https://wncviz.com/demos/NCAA_Brackets/kaggle_brackets.html.
 
 ## Authors
 Noah Zipper and Samuel Radack
