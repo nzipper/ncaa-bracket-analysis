@@ -135,9 +135,7 @@ Our cross-validation tests provided the most significant learning. We found that
 
 The final predicted bracket is visualized below, highlighting key upset predictions that our models identified.
 
-[Bracket result for 2021 tournament](post2015_Bracket.png)
-[Upsets identified by different models](<img width="1289" height="537" alt="Screenshot 2025-09-05 at 10 42 37" src="https://github.com/user-attachments/assets/ccd3e2ad-c1dd-46cf-818d-e8961fed5830" />)
-
+<img src="post2015_Bracket.png" alt="Bracket result for 2021 tournament" width="48%">    <img src="upsets.png" alt="Upsets identified by different models" width="48%">
 
 ## Future Work
 
